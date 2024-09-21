@@ -10,11 +10,15 @@ import yevhen.synii.admin_panel.dto.AuthenticationResponse;
 import yevhen.synii.admin_panel.dto.RegisterRequest;
 import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.entity.enums.UserRole;
+import yevhen.synii.admin_panel.entity.enums.UserStatus;
 import yevhen.synii.admin_panel.exception.EmailIsAlreadyTaken;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
 import yevhen.synii.admin_panel.exception.WrongPassword;
 import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.AuthenticationService;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +32,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if(repo.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailIsAlreadyTaken("Email was already taken");
         }
-        var userEntity = new UserEntity();
-        userEntity.setFirstName(request.getFirstName());
-        userEntity.setLastName(request.getLastName());
-        userEntity.setEmail(request.getEmail());
-        userEntity.setRole(UserRole.OPERATOR);
-        userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
+        UserEntity userEntity = (UserEntity) UserEntity
+                .builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .role(UserRole.OPERATOR)
+                .status(UserStatus.ACTIVE)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .created_at(Timestamp.valueOf(LocalDateTime.now()))
+                .updated_at(Timestamp.valueOf(LocalDateTime.now()))
+                .build();
         repo.save(userEntity);
         var jwtToken = jwtService.generateToken(userEntity);
         return AuthenticationResponse.builder()

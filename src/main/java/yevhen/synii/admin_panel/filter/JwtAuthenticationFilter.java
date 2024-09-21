@@ -1,4 +1,4 @@
-package yevhen.synii.admin_panel.config;
+package yevhen.synii.admin_panel.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
