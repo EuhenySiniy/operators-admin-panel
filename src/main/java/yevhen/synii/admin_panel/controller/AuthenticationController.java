@@ -1,5 +1,7 @@
 package yevhen.synii.admin_panel.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,5 +31,13 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request
     ) {
         return ResponseEntity.ok(service.authenticate(request));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        return service.refreshToken(request, response);
     }
 }

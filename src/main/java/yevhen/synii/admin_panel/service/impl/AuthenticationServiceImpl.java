@@ -1,8 +1,14 @@
 package yevhen.synii.admin_panel.service.impl;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import yevhen.synii.admin_panel.dto.AuthenticationRequest;
@@ -27,12 +33,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
 
     public AuthenticationResponse register(RegisterRequest request) {
         if(repo.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailIsAlreadyTaken("Email was already taken");
         }
-        UserEntity userEntity = (UserEntity) UserEntity
+        UserEntity userEntity = UserEntity
                 .builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -44,9 +51,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .updated_at(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
         repo.save(userEntity);
-        var jwtToken = jwtService.generateToken(userEntity);
+        var jwtAccessToken = jwtService.generateAccessToken(userEntity);
+        var jwtRefreshToken = jwtService.generateRefreshToken(userEntity);
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .accessToken(jwtAccessToken)
+                .refreshToken(jwtRefreshToken)
                 .build();
     }
 
@@ -63,9 +72,30 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     request.getPassword()
                 )
             );
-        var jwtToken = jwtService.generateToken(user);
+        var jwtAccessToken = jwtService.generateAccessToken(user);
+        var jwtRefreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .accessToken(jwtAccessToken)
+                .refreshToken(jwtRefreshToken)
                 .build();
+    }
+
+    public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
+        if(authHeader == null || !authHeader.startsWith("Bearer")) {
+            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+        }
+        jwt = authHeader.substring(7);
+        userEmail = jwtService.extractUsername(jwt);
+        UserDetails user = this.userDetailsService.loadUserByUsername(userEmail);
+        if(jwtService.isTokenValid(jwt, user)) {
+            var jwtAccessToken = jwtService.generateAccessToken(user);
+            var jwtRefreshToken = jwtService.generateRefreshToken(user);
+
+            return new ResponseEntity(new AuthenticationResponse(jwtAccessToken, jwtRefreshToken), HttpStatus.OK);
+        }
+        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
     }
 }

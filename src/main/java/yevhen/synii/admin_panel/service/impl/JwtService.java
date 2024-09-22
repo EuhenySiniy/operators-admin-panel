@@ -18,6 +18,7 @@ import java.util.function.Function;
 public class JwtService {
     private static final String SECRET_KEY = "G0DJtiwbC8rQ4yhiNhRKEsndr+OW8fAua1jxjkm8YmhjqpIwtxKEXOadH6FuqLCr11/I2gt+7SthOlcrXPAeB+GCnfCLpY9SYRIIdWyM33bm2VMg+ubpszNiUcou5WCy6tKxFBeIJsrkkPquWuWBRJ8Kmmopr+0j6EMjJJl2K4unNblAu058tke56aV+szEipB0pVV3tm1MKNi3Xld5K9FZpVU3fZeOOvmOM+d9dn5SDbzKdfvPffz9QPaAcF2d4CWujLYWrFph2yM4T20gn6cAax6GD9uOQdZNxizuXtFj5+6fvBSnrgkdoUYqPxXOl4ZHV6Pl3P6YwQ8rJb9J1mZZ9/RhHldlywAXjwfyqj5I=";
     private static final Long ONE_HOUR = 3600000L;
+    private static final Long ONE_DAY = 86400000L;
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -27,11 +28,11 @@ public class JwtService {
         return claimsResolved.apply(claims);
     }
 
-    public String generateToken(UserDetails user) {
-        return generateToken(new HashMap<>(), user);
+    public String generateAccessToken(UserDetails user) {
+        return generateAccessToken(new HashMap<>(), user);
     }
 
-    public String generateToken(
+    public String generateAccessToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails
     ) {
@@ -40,7 +41,25 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + ONE_HOUR * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + ONE_HOUR * 8))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshToken(UserDetails user) {
+        return generateRefreshToken(new HashMap<>(), user);
+    }
+
+    public String generateRefreshToken(
+            Map<String, Object> extraClaims,
+            UserDetails userDetails
+    ) {
+        return Jwts
+                .builder()
+                .setClaims(extraClaims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + ONE_DAY * 7))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
