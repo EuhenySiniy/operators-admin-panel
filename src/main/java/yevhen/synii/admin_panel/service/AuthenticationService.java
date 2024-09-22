@@ -6,11 +6,15 @@ import org.springframework.http.ResponseEntity;
 import yevhen.synii.admin_panel.dto.AuthenticationRequest;
 import yevhen.synii.admin_panel.dto.AuthenticationResponse;
 import yevhen.synii.admin_panel.dto.RegisterRequest;
+import yevhen.synii.admin_panel.dto.UserInfoResponse;
 
 public interface AuthenticationService {
-    public AuthenticationResponse register(RegisterRequest request);
+    AuthenticationResponse register(RegisterRequest request);
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request);
+    AuthenticationResponse authenticate(AuthenticationRequest request);
 
-    public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response);
+
+
+    ResponseEntity getUserProfile(HttpServletRequest request, HttpServletResponse response);
 }
