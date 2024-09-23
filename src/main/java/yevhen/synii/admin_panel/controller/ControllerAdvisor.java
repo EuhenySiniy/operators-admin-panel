@@ -19,7 +19,8 @@ public class ControllerAdvisor extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
             EmailIsAlreadyTaken.class,
             WrongPassword.class,
-            UserIsNotFound.class
+            UserIsNotFound.class,
+            IllegalArgumentException.class
     })
     public ResponseEntity<?> handleModelIncorrectRequestException(Exception e) {
         return getErrorResponseEntity(e, HttpStatus.BAD_REQUEST);

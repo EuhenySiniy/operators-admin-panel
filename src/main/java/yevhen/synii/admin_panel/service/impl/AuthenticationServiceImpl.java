@@ -27,7 +27,6 @@ import yevhen.synii.admin_panel.service.AuthenticationService;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +37,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
+    @Override
     public AuthenticationResponse register(RegisterRequest request) {
         if(repo.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailIsAlreadyTaken("Email was already taken");
@@ -62,6 +62,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = repo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
@@ -85,6 +86,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    @Override
     public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;

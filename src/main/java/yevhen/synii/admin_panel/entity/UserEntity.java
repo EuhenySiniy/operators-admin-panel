@@ -23,7 +23,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserEntity extends BaseEntity implements UserDetails {
-
     @Column(name = "first_name")
     private String firstName;
 
