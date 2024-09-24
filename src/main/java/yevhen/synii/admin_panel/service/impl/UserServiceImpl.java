@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import yevhen.synii.admin_panel.dto.UserMetricsResponse;
+import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
 import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.UserService;
@@ -27,5 +28,40 @@ public class UserServiceImpl implements UserService {
                 .build();
         return new ResponseEntity(userMetrics,
                 HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity changeProfileInfo(
+            String firstName,
+            String lastName,
+            String email,
+            String profilePhoto,
+            Long id
+    ) {
+        if(firstName.isEmpty() && lastName.isEmpty() && email.isEmpty() && profilePhoto.isEmpty()) {
+            return new ResponseEntity(HttpStatus.OK);
+        }
+        UserEntity user = repo.findById(id)
+                .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
+        if(!firstName.isEmpty()) {
+            user.setFirstName(firstName);
+        }
+        if(!lastName.isEmpty()) {
+            user.setLastName(lastName);
+        }
+        if(!email.isEmpty()) {
+            user.setEmail(email);
+        }
+        if(!profilePhoto.isEmpty()) {
+            user.setProfilePhoto(profilePhoto);
+        }
+        repo.changeUserProfile(
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getProfilePhoto(),
+                id
+        );
+        return new ResponseEntity(HttpStatus.OK);
     }
 }
