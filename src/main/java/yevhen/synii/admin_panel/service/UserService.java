@@ -1,11 +1,14 @@
 package yevhen.synii.admin_panel.service;
 
 import org.springframework.http.ResponseEntity;
+import yevhen.synii.admin_panel.dto.UserMetricsResponse;
+import yevhen.synii.admin_panel.dto.UserProfileResponse;
+import yevhen.synii.admin_panel.entity.UserEntity;
 
 public interface UserService {
-    ResponseEntity getUserMetrics(Long id);
+    ResponseEntity<UserMetricsResponse> getUserMetrics(Long id);
 
-    ResponseEntity changeProfileInfo(
+    ResponseEntity<UserProfileResponse> changeProfileInfo(
             String firstName,
             String lastName,
             String email,

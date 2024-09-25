@@ -1,10 +1,12 @@
 package yevhen.synii.admin_panel.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import yevhen.synii.admin_panel.dto.UserMetricsResponse;
+import yevhen.synii.admin_panel.dto.UserProfileResponse;
 import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
 import yevhen.synii.admin_panel.repository.UsersRepo;
@@ -16,7 +18,7 @@ public class UserServiceImpl implements UserService {
     private final UsersRepo repo;
 
     @Override
-    public ResponseEntity getUserMetrics(Long id) {
+    public ResponseEntity<UserMetricsResponse> getUserMetrics(Long id) {
         var userEntity = repo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
         UserMetricsResponse userMetrics = UserMetricsResponse.builder()
@@ -26,12 +28,12 @@ public class UserServiceImpl implements UserService {
                 .knowledgeQuality(userEntity.getKnowledgeQuality())
                 .totalKpi(userEntity.getTotalKpi())
                 .build();
-        return new ResponseEntity(userMetrics,
+        return new ResponseEntity<>(userMetrics,
                 HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity changeProfileInfo(
+    public ResponseEntity<UserProfileResponse> changeProfileInfo(
             String firstName,
             String lastName,
             String email,
@@ -39,7 +41,7 @@ public class UserServiceImpl implements UserService {
             Long id
     ) {
         if(firstName.isEmpty() && lastName.isEmpty() && email.isEmpty() && profilePhoto.isEmpty()) {
-            return new ResponseEntity(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
         UserEntity user = repo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
@@ -62,6 +64,14 @@ public class UserServiceImpl implements UserService {
                 user.getProfilePhoto(),
                 id
         );
-        return new ResponseEntity(HttpStatus.OK);
+        UserProfileResponse userResponse = UserProfileResponse.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .profilePhoto(user.getProfilePhoto())
+                .nextShiftAt(user.getNextShift())
+                .startWorkAt(user.getStartedWork())
+                .build();
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 }

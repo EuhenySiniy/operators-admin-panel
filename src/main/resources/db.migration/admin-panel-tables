@@ -57,6 +57,11 @@ create table events_to_users(
 
 create table tokens_table(
     id serial primary key,
-    user_id in referencer users(id),
-
+    user_id in references users(id),
+    access_token varchar,
+    refresh_token varchar,
+    access_expires_at timestamp,
+    refresh_expires_at timestamp,
+    created_at timestamp,
+    updated_at timestamp
 );
