@@ -1,7 +1,6 @@
 package yevhen.synii.admin_panel.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -11,6 +10,8 @@ import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
 import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.UserService;
+
+import java.sql.Timestamp;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +63,7 @@ public class UserServiceImpl implements UserService {
                 user.getLastName(),
                 user.getEmail(),
                 user.getProfilePhoto(),
+                new Timestamp(System.currentTimeMillis()),
                 id
         );
         UserProfileResponse userResponse = UserProfileResponse.builder()
@@ -69,8 +71,6 @@ public class UserServiceImpl implements UserService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .profilePhoto(user.getProfilePhoto())
-                .nextShiftAt(user.getNextShift())
-                .startWorkAt(user.getStartedWork())
                 .build();
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }

@@ -16,6 +16,4 @@ public class UserProfileResponse {
     private String lastName;
     private String email;
     private String profilePhoto;
-    private Timestamp nextShiftAt;
-    private Timestamp startWorkAt;
 }

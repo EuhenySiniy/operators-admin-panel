@@ -5,7 +5,7 @@ create table users (
 	id serial primary key,
 	first_name varchar(90),
 	last_name varchar(90),
-	email varchar not null,
+	email varchar unique not null,
 	role user_role not null,
 	profile_photo varchar,
 	active_time numeric(5,2),
@@ -45,21 +45,17 @@ create table events(
 	event_link varchar,
 	event_date_time timestamp,
 	facilitator_id int references users(id),
+	attendee_emails varchar[],
 	created_at timestamp,
 	updated_at timestamp
 );
 
-create table events_to_users(
-	id serial primary key,
-	event_id int references events(id),
-	user_id int references users(id)
-);
-
-create table tokens_table(
+create table tokens(
     id serial primary key,
-    user_id in references users(id),
+    user_id int references users(id),
     access_token varchar,
     refresh_token varchar,
+    expired boolean,
     access_expires_at timestamp,
     refresh_expires_at timestamp,
     created_at timestamp,

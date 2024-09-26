@@ -33,7 +33,7 @@ import java.time.LocalDateTime;
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final UsersRepo repo;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final JwtServiceImpl jwtServiceImpl;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
@@ -54,8 +54,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .updated_at(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
         repo.save(userEntity);
-        var jwtAccessToken = jwtService.generateAccessToken(userEntity);
-        var jwtRefreshToken = jwtService.generateRefreshToken(userEntity);
+        var jwtAccessToken = jwtServiceImpl.generateAccessToken(userEntity);
+        var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userEntity);
         return AuthenticationResponse.builder()
                 .accessToken(jwtAccessToken)
                 .refreshToken(jwtRefreshToken)
@@ -78,8 +78,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     request.getPassword()
                 )
             );
-        var jwtAccessToken = jwtService.generateAccessToken(user);
-        var jwtRefreshToken = jwtService.generateRefreshToken(user);
+        var jwtAccessToken = jwtServiceImpl.generateAccessToken(user);
+        var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .accessToken(jwtAccessToken)
                 .refreshToken(jwtRefreshToken)
@@ -95,11 +95,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return new ResponseEntity(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        userEmail = jwtServiceImpl.extractUsername(jwt);
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-        if(jwtService.isTokenValid(jwt, userDetails)) {
-            var jwtAccessToken = jwtService.generateAccessToken(userDetails);
-            var jwtRefreshToken = jwtService.generateRefreshToken(userDetails);
+        if(jwtServiceImpl.isTokenValid(jwt, userDetails)) {
+            var jwtAccessToken = jwtServiceImpl.generateAccessToken(userDetails);
+            var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userDetails);
 
             return new ResponseEntity(new AuthenticationResponse(jwtAccessToken, jwtRefreshToken), HttpStatus.OK);
         }
@@ -116,7 +116,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return new ResponseEntity(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        userEmail = jwtServiceImpl.extractUsername(jwt);
         var userEntity = repo.findByEmail(userEmail)
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
         fullName = userEntity.getFirstName() + " " + userEntity.getLastName();

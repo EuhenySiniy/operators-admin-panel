@@ -5,20 +5,21 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Service
-public class JwtService {
+@RequiredArgsConstructor
+public class JwtServiceImpl {
     private static final String SECRET_KEY = "G0DJtiwbC8rQ4yhiNhRKEsndr+OW8fAua1jxjkm8YmhjqpIwtxKEXOadH6FuqLCr11/I2gt+7SthOlcrXPAeB+GCnfCLpY9SYRIIdWyM33bm2VMg+ubpszNiUcou5WCy6tKxFBeIJsrkkPquWuWBRJ8Kmmopr+0j6EMjJJl2K4unNblAu058tke56aV+szEipB0pVV3tm1MKNi3Xld5K9FZpVU3fZeOOvmOM+d9dn5SDbzKdfvPffz9QPaAcF2d4CWujLYWrFph2yM4T20gn6cAax6GD9uOQdZNxizuXtFj5+6fvBSnrgkdoUYqPxXOl4ZHV6Pl3P6YwQ8rJb9J1mZZ9/RhHldlywAXjwfyqj5I=";
     private static final Long ONE_HOUR = 3600000L;
     private static final Long ONE_DAY = 86400000L;
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }

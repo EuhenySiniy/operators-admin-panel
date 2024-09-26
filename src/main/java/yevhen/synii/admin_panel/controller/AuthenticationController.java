@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import yevhen.synii.admin_panel.dto.AuthenticationRequest;
 import yevhen.synii.admin_panel.dto.AuthenticationResponse;
 import yevhen.synii.admin_panel.dto.RegisterRequest;
-import yevhen.synii.admin_panel.dto.UserInfoResponse;
 import yevhen.synii.admin_panel.service.impl.AuthenticationServiceImpl;
 
 @RestController

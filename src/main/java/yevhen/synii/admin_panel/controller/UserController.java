@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import yevhen.synii.admin_panel.dto.UserMetricsResponse;
 import yevhen.synii.admin_panel.dto.UserProfileResponse;
-import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.service.impl.UserServiceImpl;
 
 @RestController

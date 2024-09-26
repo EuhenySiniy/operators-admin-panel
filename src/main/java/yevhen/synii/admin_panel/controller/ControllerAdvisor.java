@@ -1,16 +1,12 @@
 package yevhen.synii.admin_panel.controller;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import yevhen.synii.admin_panel.dto.ErrorResponse;
-import yevhen.synii.admin_panel.exception.EmailIsAlreadyTaken;
-import yevhen.synii.admin_panel.exception.UserHasBeenDeactivated;
-import yevhen.synii.admin_panel.exception.UserIsNotFound;
-import yevhen.synii.admin_panel.exception.WrongPassword;
+import yevhen.synii.admin_panel.exception.*;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +16,8 @@ public class ControllerAdvisor extends ResponseEntityExceptionHandler {
             EmailIsAlreadyTaken.class,
             WrongPassword.class,
             UserIsNotFound.class,
-            IllegalArgumentException.class
+            IllegalArgumentException.class,
+            BadRequestException.class
     })
     public ResponseEntity<?> handleModelIncorrectRequestException(Exception e) {
         return getErrorResponseEntity(e, HttpStatus.BAD_REQUEST);
