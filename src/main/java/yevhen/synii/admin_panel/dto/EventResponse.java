@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateEventResponse {
+public class EventResponse {
     @JsonProperty(value = "event_id")
     private Long eventId;
     @JsonProperty(value = "event_name")

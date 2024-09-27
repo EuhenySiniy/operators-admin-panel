@@ -19,7 +19,7 @@ public interface UsersRepo extends JpaRepository<UserEntity, Long> {
     @Modifying
     @Transactional
     @Query(value = "update admin_panel_dev.users set first_name = ?1, last_name = ?2, email = ?3, profile_photo = ?4, updated_at = ?5 where id = ?6",
-    nativeQuery = true)
+            nativeQuery = true)
     void changeUserProfile(
             String firstName,
             String lastName,

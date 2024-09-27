@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import yevhen.synii.admin_panel.dto.CreateEventRequest;
-import yevhen.synii.admin_panel.dto.CreateEventResponse;
+import yevhen.synii.admin_panel.dto.EventResponse;
 import yevhen.synii.admin_panel.entity.EventEntity;
 import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.exception.BadRequestException;
@@ -16,8 +16,9 @@ import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.EventService;
 
 import java.sql.Timestamp;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +59,7 @@ public class EventServiceImpl implements EventService {
                 .created_at(new Timestamp(System.currentTimeMillis()))
                 .updated_at(new Timestamp(System.currentTimeMillis()))
                 .build());
-        CreateEventResponse response = CreateEventResponse.builder()
+        EventResponse response = EventResponse.builder()
                 .eventId(savedEvent.getId())
                 .eventName(savedEvent.getEventName())
                 .eventDescription(savedEvent.getEventDescription())
@@ -68,6 +69,20 @@ public class EventServiceImpl implements EventService {
                 .attendeeEmails(savedEvent.getAttendeeEmails())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @Override
+    public List<EventResponse> getEventsByUserId(Long id) {
+        return repo.getUserEvents(id)
+                .stream().map(eventEntity -> EventResponse.builder()
+                        .eventId(eventEntity.getId())
+                        .eventName(eventEntity.getEventName())
+                        .eventDescription(eventEntity.getEventDescription())
+                        .eventLink(eventEntity.getEventLink())
+                        .eventDateTime(eventEntity.getEventDateTime())
+                        .facilitator(eventEntity.getUserEntity().getId().toString())
+                        .attendeeEmails(eventEntity.getAttendeeEmails())
+                        .build()).toList();
     }
 
     public boolean isEventPast(Timestamp dateTime) {
