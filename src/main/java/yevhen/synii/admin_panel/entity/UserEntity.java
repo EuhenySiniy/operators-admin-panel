@@ -63,8 +63,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "pass")
     private String password;
 
-    private String salt;
-
     @Column(name = "next_shift_at")
     private Timestamp nextShift;
 
@@ -79,6 +77,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
     })
     @JoinTable(name = "events_to_users", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
     private Set<EventEntity> events;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "supervisor_id")
+    private UserEntity supervisorId;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

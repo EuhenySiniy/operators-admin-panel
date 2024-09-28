@@ -13,7 +13,7 @@ public interface EventsRepo extends JpaRepository<EventEntity, Long> {
             nativeQuery = true)
     List<EventEntity> getUserEvents(Long id);
 
-    @Query(value = "select " +
+    @Query(value = "select distinct " +
             "e.id, " +
             "e.event_name, " +
             "e.event_description," +
