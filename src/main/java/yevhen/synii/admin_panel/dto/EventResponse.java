@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 @Data
 @Builder
@@ -25,7 +24,4 @@ public class EventResponse {
     @JsonProperty(value = "event_date_time")
     private Timestamp eventDateTime;
     private String facilitator;
-    @JsonProperty(value = "event_attendee_list")
-    private List<String> attendeeEmails;
-
 }

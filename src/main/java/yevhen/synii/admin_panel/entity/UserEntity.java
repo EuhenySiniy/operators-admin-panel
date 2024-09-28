@@ -14,6 +14,7 @@ import yevhen.synii.admin_panel.entity.enums.UserStatus;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -69,6 +70,15 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     @Column(name = "start_work_at")
     private Timestamp startedWork;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {
+            CascadeType.DETACH,
+            CascadeType.MERGE,
+            CascadeType.PERSIST,
+            CascadeType.REFRESH
+    })
+    @JoinTable(name = "events_to_users", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
+    private Set<EventEntity> events;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

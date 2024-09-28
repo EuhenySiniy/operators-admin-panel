@@ -20,6 +20,4 @@ public class CreateEventRequest {
     private String eventDescription;
     @JsonProperty(value = "event_date_time")
     private Timestamp eventDateTime;
-    @JsonProperty(value = "event_attendee_list")
-    private List<String> attendeeEmails;
 }

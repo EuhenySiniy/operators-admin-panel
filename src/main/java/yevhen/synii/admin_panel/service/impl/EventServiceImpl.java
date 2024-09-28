@@ -16,9 +16,7 @@ import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.EventService;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +31,7 @@ public class EventServiceImpl implements EventService {
         if(
                 request.getEventName() == null ||
                 request.getEventDescription() == null ||
-                request.getEventDateTime() == null ||
-                request.getAttendeeEmails() == null
+                request.getEventDateTime() == null
         ) {
             throw new BadRequestException("Required parameter(s) is(are) absent");
         }
@@ -55,7 +52,6 @@ public class EventServiceImpl implements EventService {
                 .eventLink(TEMPORARY_LINK_ON_MEET)
                 .eventDateTime(request.getEventDateTime())
                 .userEntity(userEntity)
-                .attendeeEmails(request.getAttendeeEmails())
                 .created_at(new Timestamp(System.currentTimeMillis()))
                 .updated_at(new Timestamp(System.currentTimeMillis()))
                 .build());
@@ -66,23 +62,23 @@ public class EventServiceImpl implements EventService {
                 .eventLink(savedEvent.getEventLink())
                 .eventDateTime(savedEvent.getEventDateTime())
                 .facilitator(userEntity.getEmail())
-                .attendeeEmails(savedEvent.getAttendeeEmails())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Override
     public List<EventResponse> getEventsByUserId(Long id) {
-        return repo.getUserEvents(id)
-                .stream().map(eventEntity -> EventResponse.builder()
-                        .eventId(eventEntity.getId())
-                        .eventName(eventEntity.getEventName())
-                        .eventDescription(eventEntity.getEventDescription())
-                        .eventLink(eventEntity.getEventLink())
-                        .eventDateTime(eventEntity.getEventDateTime())
-                        .facilitator(eventEntity.getUserEntity().getId().toString())
-                        .attendeeEmails(eventEntity.getAttendeeEmails())
-                        .build()).toList();
+        List<EventEntity> eventsResponses = repo.getUserEventsByUserId(id);
+        return eventsResponses.stream()
+                .map(e -> EventResponse.builder()
+                        .eventId(e.getId())
+                        .eventName(e.getEventName())
+                        .eventDescription(e.getEventDescription())
+                        .eventLink(e.getEventLink())
+                        .eventDateTime(e.getEventDateTime())
+                        .facilitator(e.getUserEntity().getFirstName())
+                        .build())
+                .toList();
     }
 
     public boolean isEventPast(Timestamp dateTime) {
