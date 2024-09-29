@@ -28,4 +28,6 @@ public class UserInfoResponse {
     private Timestamp startWorkAt;
     @JsonProperty(value = "next_shift_at", index = 6)
     private Timestamp nextShiftAt;
+    @JsonProperty(index = 7)
+    private String supervisor;
 }

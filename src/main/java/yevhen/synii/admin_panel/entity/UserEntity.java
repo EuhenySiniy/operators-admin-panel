@@ -78,7 +78,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @JoinTable(name = "events_to_users", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
     private Set<EventEntity> events;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "supervisor_id")
     private UserEntity supervisorId;
 

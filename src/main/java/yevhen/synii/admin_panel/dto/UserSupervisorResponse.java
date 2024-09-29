@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileResponse {
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String profilePhoto;
-    private String supervisor;
+public class UserSupervisorResponse {
+    private String operatorName;
+    private String supervisorName;
 }

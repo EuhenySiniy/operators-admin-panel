@@ -30,7 +30,7 @@ public class EventEntity extends BaseEntity{
     @Column(name = "event_date_time")
     private Timestamp eventDateTime;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "facilitator_id")
     private UserEntity userEntity;
 

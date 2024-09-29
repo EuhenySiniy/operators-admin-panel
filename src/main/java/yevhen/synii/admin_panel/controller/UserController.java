@@ -1,5 +1,6 @@
 package yevhen.synii.admin_panel.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +29,13 @@ public class UserController {
             @RequestParam @NonNull Long id
     ) {
         return userService.changeProfileInfo(firstName, lastName, email, profilePhoto, id);
+    }
+
+    @PutMapping("/set-supervisor")
+    public ResponseEntity<?> setSupervisor(
+            @RequestParam(name = "user_id") Long userId,
+            @RequestParam(name = "supervisor_id") Long supervisorId,
+            HttpServletRequest servletRequest) {
+        return userService.setSupervisor(userId, supervisorId, servletRequest);
     }
 }

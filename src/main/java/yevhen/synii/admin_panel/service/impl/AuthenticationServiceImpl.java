@@ -120,6 +120,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var userEntity = repo.findByEmail(userEmail)
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
         fullName = userEntity.getFirstName() + " " + userEntity.getLastName();
+        String supervisor = "";
+        if(userEntity.getSupervisorId() != null) {
+            supervisor = userEntity.getSupervisorId().getFirstName() + " " + userEntity.getSupervisorId().getLastName();
+        }
         UserInfoResponse userResponse = UserInfoResponse.builder()
                 .id(userEntity.getId())
                 .email(userEntity.getEmail())
@@ -128,6 +132,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .profilePhoto(userEntity.getProfilePhoto())
                 .startWorkAt(userEntity.getStartedWork())
                 .nextShiftAt(userEntity.getNextShift())
+                .supervisor(supervisor)
                 .build();
         return new ResponseEntity(userResponse,
                 HttpStatus.OK);
