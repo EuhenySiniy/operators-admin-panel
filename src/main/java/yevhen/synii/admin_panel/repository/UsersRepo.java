@@ -30,7 +30,7 @@ public interface UsersRepo extends JpaRepository<UserEntity, Long> {
 
     @Modifying
     @Transactional
-    @Query(value = "update admin_panel_dev.users set supervisor_id = ?2 where id =?1",
+    @Query(value = "update admin_panel_dev.users set supervisor_id = ?2, updated_at = now() where id =?1",
             nativeQuery = true)
     void  setSupervisorToOperator(Long userId, Long supervisorId);
 }

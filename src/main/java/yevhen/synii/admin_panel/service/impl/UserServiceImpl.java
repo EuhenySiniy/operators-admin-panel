@@ -16,6 +16,7 @@ import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.UserService;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -100,6 +101,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserIsNotFound("User with ID: " + userId + " is not found"));
         UserEntity supervisor = repo.findById(supervisorId)
                 .orElseThrow(() -> new UserIsNotFound("User with ID: " + supervisorId + " is not found"));
+        if (operator.getSupervisorId() != null) {
+            if (Objects.equals(operator.getSupervisorId().getId(), supervisor.getId())) {
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+        }
         if (supervisor.getRole() != UserRole.SUPERVISOR) {
             throw new BadRequestException("User with ID: " + supervisorId + " is not supervisor");
         }
