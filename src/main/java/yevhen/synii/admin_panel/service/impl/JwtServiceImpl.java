@@ -8,9 +8,13 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import yevhen.synii.admin_panel.entity.enums.UserRole;
 
 import java.security.Key;
-import java.util.*;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -29,14 +33,18 @@ public class JwtServiceImpl {
         return claimsResolved.apply(claims);
     }
 
-    public String generateAccessToken(UserDetails user) {
-        return generateAccessToken(new HashMap<>(), user);
+    public String generateAccessToken(UserDetails user, Long id, UserRole role) {
+        return generateAccessToken(new HashMap<>(), user, id, role);
     }
 
     public String generateAccessToken(
             Map<String, Object> extraClaims,
-            UserDetails userDetails
+            UserDetails userDetails,
+            Long id,
+            UserRole role
     ) {
+        extraClaims.put("id", id);
+        extraClaims.put("role", role);
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
@@ -68,6 +76,10 @@ public class JwtServiceImpl {
     public boolean isTokenValid(String token, UserDetails user) {
         final String username = extractUsername(token);
         return (username.equals(user.getUsername())) && !isTokenExpired(token);
+    }
+
+    public Timestamp tokenExpiration(String token) {
+        return new Timestamp(extractExpiration(token).getTime());
     }
 
     private boolean isTokenExpired(String token) {

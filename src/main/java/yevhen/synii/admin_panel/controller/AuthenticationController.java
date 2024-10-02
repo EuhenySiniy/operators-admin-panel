@@ -31,7 +31,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity refreshToken(
+    public ResponseEntity<?> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -39,7 +39,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity getUserProfile(
+    public ResponseEntity<?> getUserProfile(
             HttpServletRequest request,
             HttpServletResponse response
     ) {

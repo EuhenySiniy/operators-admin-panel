@@ -17,7 +17,6 @@ import yevhen.synii.admin_panel.service.UserService;
 
 import java.sql.Timestamp;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

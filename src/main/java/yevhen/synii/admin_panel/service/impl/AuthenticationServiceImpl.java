@@ -7,14 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import yevhen.synii.admin_panel.dto.AuthenticationRequest;
 import yevhen.synii.admin_panel.dto.AuthenticationResponse;
 import yevhen.synii.admin_panel.dto.RegisterRequest;
 import yevhen.synii.admin_panel.dto.UserInfoResponse;
+import yevhen.synii.admin_panel.entity.TokenEntity;
 import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.entity.enums.UserRole;
 import yevhen.synii.admin_panel.entity.enums.UserStatus;
@@ -22,6 +21,7 @@ import yevhen.synii.admin_panel.exception.EmailIsAlreadyTaken;
 import yevhen.synii.admin_panel.exception.UserHasBeenDeactivated;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
 import yevhen.synii.admin_panel.exception.WrongPassword;
+import yevhen.synii.admin_panel.repository.TokensRepo;
 import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.AuthenticationService;
 
@@ -31,11 +31,11 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
+    private final TokensRepo tokensRepo;
     private final UsersRepo repo;
     private final PasswordEncoder passwordEncoder;
     private final JwtServiceImpl jwtServiceImpl;
     private final AuthenticationManager authenticationManager;
-    private final UserDetailsService userDetailsService;
 
     @Override
     public AuthenticationResponse register(RegisterRequest request) {
@@ -53,9 +53,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .created_at(Timestamp.valueOf(LocalDateTime.now()))
                 .updated_at(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
-        repo.save(userEntity);
-        var jwtAccessToken = jwtServiceImpl.generateAccessToken(userEntity);
+        UserEntity savedUser = repo.save(userEntity);
+        var jwtAccessToken = jwtServiceImpl.generateAccessToken(userEntity, savedUser.getId(), savedUser.getRole());
         var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userEntity);
+        tokensRepo.save(TokenEntity.builder()
+                        .userEntity(savedUser)
+                        .accessToken(jwtAccessToken)
+                        .refreshToken(jwtRefreshToken)
+                        .expired(false)
+                        .accessExpiresAt(jwtServiceImpl.tokenExpiration(jwtAccessToken))
+                        .refreshExpiresAt(jwtServiceImpl.tokenExpiration(jwtRefreshToken))
+                        .created_at(Timestamp.valueOf(LocalDateTime.now()))
+                        .updated_at(Timestamp.valueOf(LocalDateTime.now()))
+                        .build());
         return AuthenticationResponse.builder()
                 .accessToken(jwtAccessToken)
                 .refreshToken(jwtRefreshToken)
@@ -64,7 +74,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        var user = repo.findByEmail(request.getEmail())
+        UserEntity user = repo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new WrongPassword("Wrong password");
@@ -78,7 +88,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     request.getPassword()
                 )
             );
-        var jwtAccessToken = jwtServiceImpl.generateAccessToken(user);
+        var jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
         var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .accessToken(jwtAccessToken)
@@ -87,33 +97,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
         if(authHeader == null || !authHeader.startsWith("Bearer")) {
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
         userEmail = jwtServiceImpl.extractUsername(jwt);
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-        if(jwtServiceImpl.isTokenValid(jwt, userDetails)) {
-            var jwtAccessToken = jwtServiceImpl.generateAccessToken(userDetails);
-            var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userDetails);
+        UserEntity user = repo.findByEmail(userEmail)
+                .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
+        if(jwtServiceImpl.isTokenValid(jwt, user)) {
+            var jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
+            var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
 
-            return new ResponseEntity(new AuthenticationResponse(jwtAccessToken, jwtRefreshToken), HttpStatus.OK);
+            return new ResponseEntity<>(new AuthenticationResponse(jwtAccessToken, jwtRefreshToken), HttpStatus.OK);
         }
-        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
     @Override
-    public ResponseEntity getUserProfile(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> getUserProfile(HttpServletRequest request, HttpServletResponse response) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
         final String fullName;
         if(authHeader == null || !authHeader.startsWith("Bearer")) {
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
         userEmail = jwtServiceImpl.extractUsername(jwt);
@@ -134,7 +145,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .nextShiftAt(userEntity.getNextShift())
                 .supervisor(supervisor)
                 .build();
-        return new ResponseEntity(userResponse,
+        return new ResponseEntity<>(userResponse,
                 HttpStatus.OK);
     }
 
