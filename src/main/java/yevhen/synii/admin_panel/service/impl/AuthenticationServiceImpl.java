@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,8 +55,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .updated_at(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
         UserEntity savedUser = repo.save(userEntity);
-        var jwtAccessToken = jwtServiceImpl.generateAccessToken(userEntity, savedUser.getId(), savedUser.getRole());
-        var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userEntity);
+        String jwtAccessToken = jwtServiceImpl.generateAccessToken(userEntity, savedUser.getId(), savedUser.getRole());
+        String jwtRefreshToken = jwtServiceImpl.generateRefreshToken(userEntity);
         tokensRepo.save(TokenEntity.builder()
                         .userEntity(savedUser)
                         .accessToken(jwtAccessToken)
@@ -74,6 +75,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        String jwtAccessToken;
+        String jwtRefreshToken;
         UserEntity user = repo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -82,14 +85,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if(!isUserActive(user.getStatus())) {
             throw new UserHasBeenDeactivated("User has been deactivated");
         }
+        TokenEntity tokenEntity = tokensRepo.getTokenEntity(user.getId());
+        if(tokenEntity != null) {
+            jwtAccessToken = tokenEntity.getAccessToken();
+            jwtRefreshToken = tokenEntity.getRefreshToken();
+            return AuthenticationResponse.builder()
+                    .accessToken(jwtAccessToken)
+                    .refreshToken(jwtRefreshToken)
+                    .build();
+        }
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     request.getEmail(),
                     request.getPassword()
                 )
             );
-        var jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
-        var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
+        jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
+        jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
+        tokensRepo.save(TokenEntity.builder()
+                .userEntity(user)
+                .accessToken(jwtAccessToken)
+                .refreshToken(jwtRefreshToken)
+                .expired(false)
+                .accessExpiresAt(jwtServiceImpl.tokenExpiration(jwtAccessToken))
+                .refreshExpiresAt(jwtServiceImpl.tokenExpiration(jwtRefreshToken))
+                .created_at(Timestamp.valueOf(LocalDateTime.now()))
+                .updated_at(Timestamp.valueOf(LocalDateTime.now()))
+                .build());
         return AuthenticationResponse.builder()
                 .accessToken(jwtAccessToken)
                 .refreshToken(jwtRefreshToken)
@@ -108,10 +130,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userEmail = jwtServiceImpl.extractUsername(jwt);
         UserEntity user = repo.findByEmail(userEmail)
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
-        if(jwtServiceImpl.isTokenValid(jwt, user)) {
-            var jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
-            var jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
-
+        TokenEntity token = tokensRepo.getTokenEntityByRefreshToken(jwt);
+        if(jwtServiceImpl.isTokenValid(jwt, user) && !token.isExpired()) {
+            spoilToken(user.getId());
+            String jwtAccessToken = jwtServiceImpl.generateAccessToken(user, user.getId(), user.getRole());
+            String jwtRefreshToken = jwtServiceImpl.generateRefreshToken(user);
+            tokensRepo.save(TokenEntity.builder()
+                    .userEntity(user)
+                    .accessToken(jwtAccessToken)
+                    .refreshToken(jwtRefreshToken)
+                    .expired(false)
+                    .accessExpiresAt(jwtServiceImpl.tokenExpiration(jwtAccessToken))
+                    .refreshExpiresAt(jwtServiceImpl.tokenExpiration(jwtRefreshToken))
+                    .created_at(Timestamp.valueOf(LocalDateTime.now()))
+                    .updated_at(Timestamp.valueOf(LocalDateTime.now()))
+                    .build());
             return new ResponseEntity<>(new AuthenticationResponse(jwtAccessToken, jwtRefreshToken), HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -149,7 +182,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 HttpStatus.OK);
     }
 
-    public boolean isUserActive(UserStatus status) {
+    @Scheduled(cron = "${delete.spoiled.tokens.delay}", zone = "Europe/Paris")
+    private void deleteSpoiledTokens() {
+        tokensRepo.deleteAllExpiredTokens();
+    }
+
+    private boolean isUserActive(UserStatus status) {
         return status.equals(UserStatus.ACTIVE);
+    }
+
+    private void spoilToken(Long userId) {
+        tokensRepo.killToken(userId);
     }
 }

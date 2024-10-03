@@ -14,4 +14,18 @@ public interface TokensRepo extends JpaRepository<TokenEntity, Long> {
     @Query(value = "update admin_panel_dev.tokens set expired = true where user_id = ? ",
             nativeQuery = true)
     void killToken(Long userId);
+
+    @Query(value = "select * from admin_panel_dev.tokens where user_id = ? and expired = false",
+            nativeQuery = true)
+    TokenEntity getTokenEntity(Long userId);
+
+    @Query(value = "select * from admin_panel_dev.tokens where refresh_token = ? ",
+            nativeQuery = true)
+    TokenEntity getTokenEntityByRefreshToken(String refreshToken);
+
+    @Modifying
+    @Transactional
+    @Query(value = "delete from admin_panel_dev.tokens where expired = true",
+            nativeQuery = true)
+    void deleteAllExpiredTokens();
 }
