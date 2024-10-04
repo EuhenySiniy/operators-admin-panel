@@ -163,6 +163,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userEmail = jwtServiceImpl.extractUsername(jwt);
         var userEntity = repo.findByEmail(userEmail)
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
+        if(!jwtServiceImpl.isTokenValid(jwt, userEntity)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
         fullName = userEntity.getFirstName() + " " + userEntity.getLastName();
         String supervisor = "";
         if(userEntity.getSupervisorId() != null) {

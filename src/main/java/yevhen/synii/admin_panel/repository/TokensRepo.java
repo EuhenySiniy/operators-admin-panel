@@ -23,6 +23,10 @@ public interface TokensRepo extends JpaRepository<TokenEntity, Long> {
             nativeQuery = true)
     TokenEntity getTokenEntityByRefreshToken(String refreshToken);
 
+    @Query(value = "select * from admin_panel_dev.tokens where access_token = ? ",
+            nativeQuery = true)
+    TokenEntity getTokenEntityByAccessToken(String accessToken);
+
     @Modifying
     @Transactional
     @Query(value = "delete from admin_panel_dev.tokens where expired = true",

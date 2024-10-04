@@ -8,7 +8,9 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import yevhen.synii.admin_panel.entity.TokenEntity;
 import yevhen.synii.admin_panel.entity.enums.UserRole;
+import yevhen.synii.admin_panel.repository.TokensRepo;
 
 import java.security.Key;
 import java.sql.Timestamp;
@@ -20,6 +22,7 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtServiceImpl {
+    private final TokensRepo tokensRepo;
     private static final String SECRET_KEY = "G0DJtiwbC8rQ4yhiNhRKEsndr+OW8fAua1jxjkm8YmhjqpIwtxKEXOadH6FuqLCr11/I2gt+7SthOlcrXPAeB+GCnfCLpY9SYRIIdWyM33bm2VMg+ubpszNiUcou5WCy6tKxFBeIJsrkkPquWuWBRJ8Kmmopr+0j6EMjJJl2K4unNblAu058tke56aV+szEipB0pVV3tm1MKNi3Xld5K9FZpVU3fZeOOvmOM+d9dn5SDbzKdfvPffz9QPaAcF2d4CWujLYWrFph2yM4T20gn6cAax6GD9uOQdZNxizuXtFj5+6fvBSnrgkdoUYqPxXOl4ZHV6Pl3P6YwQ8rJb9J1mZZ9/RhHldlywAXjwfyqj5I=";
     private static final Long ONE_HOUR = 3600000L;
     private static final Long ONE_DAY = 86400000L;
@@ -75,7 +78,7 @@ public class JwtServiceImpl {
 
     public boolean isTokenValid(String token, UserDetails user) {
         final String username = extractUsername(token);
-        return (username.equals(user.getUsername())) && !isTokenExpired(token);
+        return (username.equals(user.getUsername())) && !isTokenExpired(token) && !isTokenSpoiled(token);
     }
 
     public Timestamp tokenExpiration(String token) {
@@ -102,5 +105,16 @@ public class JwtServiceImpl {
     private Key getSignInKey() {
        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private boolean isTokenSpoiled(String token) {
+        TokenEntity accessTokenEntity = tokensRepo.getTokenEntityByAccessToken(token);
+        TokenEntity refreshTokenEntity = tokensRepo.getTokenEntityByRefreshToken(token);
+        if(accessTokenEntity != null) {
+            return accessTokenEntity.isExpired();
+        } else if(refreshTokenEntity != null) {
+            return refreshTokenEntity.isExpired();
+        }
+        return true;
     }
 }
