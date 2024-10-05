@@ -1,6 +1,8 @@
 package yevhen.synii.admin_panel.service.impl;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import yevhen.synii.admin_panel.service.UserService;
 
 import java.sql.Timestamp;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +28,14 @@ public class UserServiceImpl implements UserService {
     private final JwtServiceImpl jwtServiceImpl;
 
     @Override
-    public ResponseEntity<UserMetricsResponse> getUserMetrics(Long id) {
+    public ResponseEntity<UserMetricsResponse> getUserMetrics(HttpServletRequest request, HttpServletResponse response) {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        if(authHeader == null || !authHeader.startsWith("Bearer")) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        jwt = authHeader.substring(7);
+        Long id = jwtServiceImpl.extractId(jwt);
         var userEntity = repo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
         UserMetricsResponse userMetrics = UserMetricsResponse.builder()
