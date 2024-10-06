@@ -5,8 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import yevhen.synii.admin_panel.dto.CreateEventRequest;
-import yevhen.synii.admin_panel.dto.EventResponse;
+import yevhen.synii.admin_panel.dto.*;
 import yevhen.synii.admin_panel.entity.EventEntity;
 import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.exception.BadRequestException;
@@ -16,6 +15,7 @@ import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.EventService;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -66,7 +66,7 @@ public class EventServiceImpl implements EventService {
                 .eventDescription(savedEvent.getEventDescription())
                 .eventLink(savedEvent.getEventLink())
                 .eventDateTime(savedEvent.getEventDateTime())
-                .facilitator(userEntity.getEmail())
+                .facilitator(userEntity.getFirstName() + " " + userEntity.getLastName())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -84,6 +84,34 @@ public class EventServiceImpl implements EventService {
                         .facilitator(e.getUserEntity().getFirstName() + " " + e.getUserEntity().getLastName())
                         .build())
                 .toList();
+    }
+
+    @Override
+    public AttendeesInfoResponse assignAttendee(AssignAttendeesRequest attendee) {
+        EventEntity event = eventsRepo.getEventById(attendee.getEventId());
+        Set<UserEntity> users = new HashSet<>();
+        List<UserBioResponse> attendeesBio = new ArrayList<>();
+        attendee.getIds().forEach(a -> {
+            UserEntity user = userRepo.findById(a).orElseThrow();
+            users.add(user);
+            attendeesBio.add(UserBioResponse.builder()
+                    .fullName(user.getFirstName() + " " + user.getLastName())
+                    .email(user.getEmail())
+                    .profilePhoto(user.getProfilePhoto())
+                    .build());
+        }
+        );
+        event.setUsers(users);
+        eventsRepo.save(event);
+        return AttendeesInfoResponse.builder()
+                .eventId(event.getId())
+                .eventName(event.getEventName())
+                .eventDescription(event.getEventDescription())
+                .eventLink(event.getEventLink())
+                .eventDateTime(event.getEventDateTime())
+                .facilitator(event.getUserEntity().getFirstName() + " " + event.getUserEntity().getLastName())
+                .attendees(attendeesBio)
+                .build();
     }
 
     public boolean isEventPast(Timestamp dateTime) {

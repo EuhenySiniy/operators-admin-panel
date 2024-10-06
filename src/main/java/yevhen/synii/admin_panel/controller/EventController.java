@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import yevhen.synii.admin_panel.dto.AssignAttendeesRequest;
 import yevhen.synii.admin_panel.dto.CreateEventRequest;
 import yevhen.synii.admin_panel.dto.EventResponse;
 import yevhen.synii.admin_panel.service.EventService;
@@ -29,5 +30,11 @@ public class EventController {
     @GetMapping("/get-events/{id}")
     public ResponseEntity<?> getEventsById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(eventService.getEventsByUserId(id), HttpStatus.OK);
+    }
+
+    @PostMapping("/assign-attendee")
+    public ResponseEntity<?> setAttendee(
+            @RequestBody AssignAttendeesRequest attendee) {
+        return new ResponseEntity<>(eventService.assignAttendee(attendee), HttpStatus.OK);
     }
 }

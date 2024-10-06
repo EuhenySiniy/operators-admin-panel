@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import yevhen.synii.admin_panel.entity.EventEntity;
+import yevhen.synii.admin_panel.service.EventService;
 
 import java.util.List;
 
@@ -30,4 +31,8 @@ public interface EventsRepo extends JpaRepository<EventEntity, Long> {
             "limit 5 ",
             nativeQuery = true)
     List<EventEntity> getUserEventsByUserId(Long id);
+
+    @Query(value = "select * from admin_panel_dev.events where id = ? ",
+            nativeQuery = true)
+    EventEntity getEventById(Long id);
 }
