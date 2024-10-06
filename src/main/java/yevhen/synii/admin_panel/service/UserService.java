@@ -15,7 +15,8 @@ public interface UserService {
             String lastName,
             String email,
             String profilePhoto,
-            Long id
+            HttpServletRequest request,
+            HttpServletResponse response
     );
 
     ResponseEntity<UserSupervisorResponse> setSupervisor(Long userId, Long supervisorId, HttpServletRequest servletRequest);

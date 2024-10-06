@@ -154,14 +154,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public ResponseEntity<?> getUserProfile(HttpServletRequest request, HttpServletResponse response) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String userEmail;
         final String fullName;
         if(authHeader == null || !authHeader.startsWith("Bearer")) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
-        userEmail = jwtServiceImpl.extractUsername(jwt);
-        var userEntity = repo.findByEmail(userEmail)
+        Long id = jwtServiceImpl.extractId(jwt);
+        var userEntity = repo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this email is not exists"));
         if(!jwtServiceImpl.isTokenValid(jwt, userEntity)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

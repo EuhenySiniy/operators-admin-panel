@@ -1,6 +1,5 @@
 package yevhen.synii.admin_panel.service.impl;
 
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,17 +13,18 @@ import yevhen.synii.admin_panel.entity.UserEntity;
 import yevhen.synii.admin_panel.entity.enums.UserRole;
 import yevhen.synii.admin_panel.exception.BadRequestException;
 import yevhen.synii.admin_panel.exception.UserIsNotFound;
+import yevhen.synii.admin_panel.repository.TokensRepo;
 import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.UserService;
 
 import java.sql.Timestamp;
 import java.util.Objects;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UsersRepo repo;
+    private final UsersRepo usersRepo;
+    private final TokensRepo tokensRepo;
     private final JwtServiceImpl jwtServiceImpl;
 
     @Override
@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
         }
         jwt = authHeader.substring(7);
         Long id = jwtServiceImpl.extractId(jwt);
-        var userEntity = repo.findById(id)
+        var userEntity = usersRepo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
         UserMetricsResponse userMetrics = UserMetricsResponse.builder()
                 .activeTime(userEntity.getActiveTime())
@@ -55,12 +55,20 @@ public class UserServiceImpl implements UserService {
             String lastName,
             String email,
             String profilePhoto,
-            Long id
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        if(authHeader == null || !authHeader.startsWith("Bearer")) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        jwt = authHeader.substring(7);
+        Long id = jwtServiceImpl.extractId(jwt);
         if(firstName.isEmpty() && lastName.isEmpty() && email.isEmpty() && profilePhoto.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.OK);
         }
-        UserEntity user = repo.findById(id)
+        UserEntity user = usersRepo.findById(id)
                 .orElseThrow(() -> new UserIsNotFound("User with this id is not exists"));
         if(!firstName.isEmpty()) {
             user.setFirstName(firstName);
@@ -70,11 +78,12 @@ public class UserServiceImpl implements UserService {
         }
         if(!email.isEmpty()) {
             user.setEmail(email);
+            tokensRepo.killToken(user.getId());
         }
         if(!profilePhoto.isEmpty()) {
             user.setProfilePhoto(profilePhoto);
         }
-        repo.changeUserProfile(
+        usersRepo.changeUserProfile(
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
@@ -101,14 +110,13 @@ public class UserServiceImpl implements UserService {
         final String authHeader = servletRequest.getHeader("Authorization");
         final String jwt;
         jwt = authHeader.substring(7);
-        UserEntity userEntity = repo.findByEmail(jwtServiceImpl.extractUsername(jwt))
-                .orElseThrow(() -> new UserIsNotFound("User is not found exception"));
-        if (userEntity.getRole() != UserRole.SUPERADMIN) {
+        UserRole role = UserRole.valueOf(jwtServiceImpl.extractRole(jwt));
+        if (!role.equals(UserRole.SUPERADMIN)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        UserEntity operator = repo.findById(userId)
+        UserEntity operator = usersRepo.findById(userId)
                 .orElseThrow(() -> new UserIsNotFound("User with ID: " + userId + " is not found"));
-        UserEntity supervisor = repo.findById(supervisorId)
+        UserEntity supervisor = usersRepo.findById(supervisorId)
                 .orElseThrow(() -> new UserIsNotFound("User with ID: " + supervisorId + " is not found"));
         if (operator.getSupervisorId() != null) {
             if (Objects.equals(operator.getSupervisorId().getId(), supervisor.getId())) {
@@ -121,7 +129,7 @@ public class UserServiceImpl implements UserService {
         if (operator.getRole() != UserRole.OPERATOR) {
             throw new BadRequestException("User with ID: " + userId + " is not operator");
         }
-        repo.setSupervisorToOperator(userId, supervisorId);
+        usersRepo.setSupervisorToOperator(userId, supervisorId);
         String operatorName = operator.getFirstName() + " " + operator.getLastName();
         String supervisorName = supervisor.getFirstName() + " " + supervisor.getLastName();
         return new ResponseEntity<>(UserSupervisorResponse.builder()

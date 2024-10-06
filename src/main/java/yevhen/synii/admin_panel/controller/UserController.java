@@ -30,9 +30,10 @@ public class UserController {
             @RequestParam(name = "last_name") String lastName,
             @RequestParam String email,
             @RequestParam(name = "profile_photo") String profilePhoto,
-            @RequestParam @NonNull Long id
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
-        return userService.changeProfileInfo(firstName, lastName, email, profilePhoto, id);
+        return userService.changeProfileInfo(firstName, lastName, email, profilePhoto, request, response);
     }
 
     @PutMapping("/set-supervisor")

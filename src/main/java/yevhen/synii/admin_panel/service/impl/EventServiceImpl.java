@@ -16,21 +16,23 @@ import yevhen.synii.admin_panel.repository.UsersRepo;
 import yevhen.synii.admin_panel.service.EventService;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
     private static final String TEMPORARY_LINK_ON_MEET = "https://meet.google.com/ykj-ejxi-nkz";
-    private final EventsRepo repo;
+    private final EventsRepo eventsRepo;
     private final UsersRepo userRepo;
     private final JwtServiceImpl jwtServiceImpl;
 
     @Override
     public ResponseEntity<?> createEvent(CreateEventRequest request, HttpServletRequest servletRequest) {
         if(
-                request.getEventName() == null ||
-                request.getEventDescription() == null ||
+                request.getEventName().isBlank() ||
+                request.getEventDescription().isBlank() ||
                 request.getEventDateTime() == null
         ) {
             throw new BadRequestException("Required parameter(s) is(are) absent");
@@ -44,14 +46,17 @@ public class EventServiceImpl implements EventService {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         jwt = authHeader.substring(7);
-        UserEntity userEntity = userRepo.findByEmail(jwtServiceImpl.extractUsername(jwt))
+        UserEntity userEntity = userRepo.findById(jwtServiceImpl.extractId(jwt))
                 .orElseThrow(() -> new UserIsNotFound("User is not found exception"));
-        EventEntity savedEvent = repo.save(EventEntity.builder()
+        Set<UserEntity> attendees = new HashSet<>();
+        attendees.add(userEntity);
+        EventEntity savedEvent = eventsRepo.save(EventEntity.builder()
                 .eventName(request.getEventName())
                 .eventDescription(request.getEventDescription())
                 .eventLink(TEMPORARY_LINK_ON_MEET)
                 .eventDateTime(request.getEventDateTime())
                 .userEntity(userEntity)
+                .users(attendees)
                 .created_at(new Timestamp(System.currentTimeMillis()))
                 .updated_at(new Timestamp(System.currentTimeMillis()))
                 .build());
@@ -68,7 +73,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventResponse> getEventsByUserId(Long id) {
-        List<EventEntity> eventsResponses = repo.getUserEventsByUserId(id);
+        List<EventEntity> eventsResponses = eventsRepo.getUserEventsByUserId(id);
         return eventsResponses.stream()
                 .map(e -> EventResponse.builder()
                         .eventId(e.getId())
@@ -76,7 +81,7 @@ public class EventServiceImpl implements EventService {
                         .eventDescription(e.getEventDescription())
                         .eventLink(e.getEventLink())
                         .eventDateTime(e.getEventDateTime())
-                        .facilitator(e.getUserEntity().getFirstName())
+                        .facilitator(e.getUserEntity().getFirstName() + " " + e.getUserEntity().getLastName())
                         .build())
                 .toList();
     }
