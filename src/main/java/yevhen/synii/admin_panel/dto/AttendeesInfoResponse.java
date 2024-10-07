@@ -26,6 +26,6 @@ public class AttendeesInfoResponse {
     private Timestamp eventDateTime;
     @JsonProperty(value = "facilitator", index = 5)
     private String facilitator;
-    @JsonProperty(value = "facilitator", index = 6)
+    @JsonProperty(value = "attendees", index = 6)
     private List<UserBioResponse> attendees;
 }

@@ -27,9 +27,9 @@ public class EventController {
         return eventService.createEvent(request, servletRequest);
     }
 
-    @GetMapping("/get-events/{id}")
-    public ResponseEntity<?> getEventsById(@PathVariable("id") Long id) {
-        return new ResponseEntity<>(eventService.getEventsByUserId(id), HttpStatus.OK);
+    @GetMapping("/get-events")
+    public ResponseEntity<?> getEventsById(HttpServletRequest servletRequest) {
+        return eventService.getEventsByUserId(servletRequest);
     }
 
     @PostMapping("/assign-attendee")

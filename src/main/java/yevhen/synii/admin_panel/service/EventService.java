@@ -12,7 +12,7 @@ import java.util.List;
 public interface EventService {
     ResponseEntity<?> createEvent(CreateEventRequest request, HttpServletRequest servletRequest);
 
-    List<EventResponse> getEventsByUserId(Long id);
+    ResponseEntity<?> getEventsByUserId(HttpServletRequest servletRequest);
 
     public AttendeesInfoResponse assignAttendee(AssignAttendeesRequest attendee);
 }

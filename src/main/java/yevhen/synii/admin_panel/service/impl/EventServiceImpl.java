@@ -72,9 +72,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventResponse> getEventsByUserId(Long id) {
-        List<EventEntity> eventsResponses = eventsRepo.getUserEventsByUserId(id);
-        return eventsResponses.stream()
+    public ResponseEntity<?> getEventsByUserId(HttpServletRequest servletRequest) {
+        final String authHeader = servletRequest.getHeader("Authorization");
+        final String jwt;
+        if(authHeader == null || !authHeader.startsWith("Bearer")) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        jwt = authHeader.substring(7);
+        List<EventEntity> eventsResponses = eventsRepo.getUserEventsByUserId(jwtServiceImpl.extractId(jwt));
+        return new ResponseEntity<>(eventsResponses.stream()
                 .map(e -> EventResponse.builder()
                         .eventId(e.getId())
                         .eventName(e.getEventName())
@@ -83,13 +89,15 @@ public class EventServiceImpl implements EventService {
                         .eventDateTime(e.getEventDateTime())
                         .facilitator(e.getUserEntity().getFirstName() + " " + e.getUserEntity().getLastName())
                         .build())
-                .toList();
+                .toList(),
+                HttpStatus.OK);
     }
 
     @Override
     public AttendeesInfoResponse assignAttendee(AssignAttendeesRequest attendee) {
         EventEntity event = eventsRepo.getEventById(attendee.getEventId());
         Set<UserEntity> users = new HashSet<>();
+        users.add(event.getUserEntity());
         List<UserBioResponse> attendeesBio = new ArrayList<>();
         attendee.getIds().forEach(a -> {
             UserEntity user = userRepo.findById(a).orElseThrow();
