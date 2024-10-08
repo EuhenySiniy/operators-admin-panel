@@ -30,4 +30,6 @@ public class UserInfoResponse {
     private Timestamp nextShiftAt;
     @JsonProperty(index = 7)
     private String supervisor;
+    @JsonProperty(value = "rating_position", index = 8)
+    private Integer ratingPosition;
 }

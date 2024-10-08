@@ -72,6 +72,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "start_work_at")
     private Timestamp startedWork;
 
+    @Column(name = "rating_position")
+    private Integer ratingPosition;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {
             CascadeType.DETACH,
             CascadeType.MERGE,

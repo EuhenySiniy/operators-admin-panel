@@ -179,6 +179,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .startWorkAt(userEntity.getStartedWork())
                 .nextShiftAt(userEntity.getNextShift())
                 .supervisor(supervisor)
+                .ratingPosition(userEntity.getRatingPosition())
                 .build();
         return new ResponseEntity<>(userResponse,
                 HttpStatus.OK);
