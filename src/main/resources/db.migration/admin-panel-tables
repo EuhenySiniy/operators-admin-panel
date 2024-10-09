@@ -22,14 +22,6 @@ create table users (
 	updated_at timestamp
 );
 
-create table supervisors_to_operators(
-	id serial primary key,
-	supervisor_id int references users(id),
-	operator_id int references users(id),
-	created_at timestamp,
-	updated_at timestamp
-);
-
 create table ranking_table(
 	id serial primary key,
 	user_id int references users(id),
@@ -45,9 +37,16 @@ create table events(
 	event_link varchar,
 	event_date_time timestamp,
 	facilitator_id int references users(id),
-	attendee_emails varchar[],
 	created_at timestamp,
 	updated_at timestamp
+);
+
+create table events_to_users (
+	id serial primary key,
+	event_id int references events(id),
+	user_id int references users(id),
+	created_at timestamp default now(),
+    updated_at timestamp
 );
 
 create table tokens(
@@ -58,6 +57,6 @@ create table tokens(
     expired boolean,
     access_expires_at timestamp,
     refresh_expires_at timestamp,
-    created_at timestamp,
+    created_at timestamp default now(),
     updated_at timestamp
 );
