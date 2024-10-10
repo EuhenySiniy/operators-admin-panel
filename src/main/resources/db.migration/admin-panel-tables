@@ -60,3 +60,13 @@ create table tokens(
     created_at timestamp default now(),
     updated_at timestamp
 );
+
+create table tests (
+	id serial primary key,
+	test_type test_type not null,
+	questions text not null,
+	correct_answers text not null,
+	expired_at timestamp not null,
+	created_at timestamp default now(),
+    updated_at timestamp
+);
